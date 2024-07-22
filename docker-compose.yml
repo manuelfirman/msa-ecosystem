@@ -1,5 +1,11 @@
 version: '3.8'
 services:
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
   auth:
     build: ./auth
     container_name: auth_service
@@ -14,6 +20,7 @@ services:
     ports:
       - "5001:5001"
     depends_on:
+      - rabbitmq
       - user_db
 
   auth_db:
@@ -24,6 +31,8 @@ services:
       MYSQL_DATABASE: ms_auth
     ports:
       - "3308:3306"   
+    volumes:
+      - ./auth/init:/docker-entrypoint-initdb.d
   user_db:
     image: mysql:latest
     container_name: user_db
@@ -32,6 +41,9 @@ services:
       MYSQL_DATABASE: ms_user
     ports:
       - "3307:3306"
+    volumes:
+      - ./user/init:/docker-entrypoint-initdb.d
+
   kong:
     image: kong:latest
     container_name: kong
@@ -48,3 +60,5 @@ services:
     depends_on:
       - auth
       - user
+  
+
