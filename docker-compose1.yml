@@ -1,0 +1,111 @@
+version: '3.8'
+services:
+  auth:
+    build: ./auth
+    container_name: auth_service
+    ports:
+      - "5000:5000"
+    depends_on:
+      - auth_db
+  user:
+    build: ./user
+    container_name: user_service
+    ports:
+      - "5001:5001"
+    depends_on:
+      - user_db
+  product:
+    build: ./product
+    container_name: product_service
+    ports:
+      - "5002:5002"
+    depends_on:
+      - product_db
+  order:
+    build: ./order
+    container_name: order_service
+    ports:
+      - "5003:5003"
+    depends_on:
+      - order_db
+  notification:
+    build: ./notification
+    container_name: notification_service
+    ports:
+      - "5004:5004"
+  auth_db:
+    image: mysql:latest
+    container_name: auth_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: authdb
+      MYSQL_USER: username
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+  user_db:
+    image: mysql:latest
+    container_name: user_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: userdb
+      MYSQL_USER: username
+      MYSQL_PASSWORD: password
+    ports:
+      - "3307:3306"
+  product_db:
+    image: mysql:latest
+    container_name: product_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: productdb
+      MYSQL_USER: username
+      MYSQL_PASSWORD: password
+    ports:
+      - "3308:3306"
+  order_db:
+    image: mysql:latest
+    container_name: order_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: orderdb
+      MYSQL_USER: username
+      MYSQL_PASSWORD: password
+    ports:
+      - "3309:3306"
+  load_balancer:
+    build: ./load_balancer
+    container_name: load_balancer
+    ports:
+      - "80:80"
+    depends_on:
+      - auth
+      - user
+      - product
+      - order
+      - notification
+  kong:
+    image: kong:latest
+    container_name: kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"
+      - "8444:8444"
+    volumes:
+      - ./kong/kong.yml:/usr/local/kong/declarative/kong.yml
+    depends_on:
+      - auth
+      - user
+      - product
+      - order
+      - notification
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"

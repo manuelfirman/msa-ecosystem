@@ -1,0 +1,22 @@
+_format_version: "2.1"
+services:
+  - name: auth_service
+    url: http://auth_service:5000
+    routes:
+      - name: auth-route
+        paths:
+          - /auth
+
+  - name: user_service
+    url: http://user_service:5001
+    routes:
+      - name: user-route
+        paths:
+          - /users
+
+plugins:
+  - name: jwt
+    service: user_service
+    config:
+      key_claim_name: "iss"
+      secret_is_base64: false

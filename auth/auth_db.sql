@@ -1,0 +1,10 @@
+DROP DATABASE IF EXISTS `ms_auth`;
+CREATE DATABASE `ms_auth`;
+USE `ms_auth`;
+
+CREATE TABLE `users`(
+    `id` INT NOT NULL AUTO_INCREMENT,
+    `username` VARCHAR(255) NOT NULL UNIQUE,
+    `password` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

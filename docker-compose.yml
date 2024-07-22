@@ -1,0 +1,50 @@
+version: '3.8'
+services:
+  auth:
+    build: ./auth
+    container_name: auth_service
+    ports:
+      - "5000:5000"
+    depends_on:
+      - auth_db
+
+  user:
+    build: ./user
+    container_name: user_service
+    ports:
+      - "5001:5001"
+    depends_on:
+      - user_db
+
+  auth_db:
+    image: mysql:latest
+    container_name: auth_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ms_auth
+    ports:
+      - "3308:3306"   
+  user_db:
+    image: mysql:latest
+    container_name: user_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ms_user
+    ports:
+      - "3307:3306"
+  kong:
+    image: kong:latest
+    container_name: kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"
+      - "8444:8444"
+    volumes:
+      - ./kong/kong.yml:/usr/local/kong/declarative/kong.yml
+    depends_on:
+      - auth
+      - user
