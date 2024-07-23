@@ -17,18 +17,6 @@ const pool = mysql.createPool({
     queueLimit: 0
   });
 
-// app.post('/users', async (req, res) => {
-//     const { username, email, first_name, last_name } = req.body;
-//     try {
-//         const result = await pool.query(
-//             'INSERT INTO users (username, email, first_name, last_name, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING *',
-//             [username, email, first_name, last_name]
-//         );
-//         res.status(201).json(result.rows[0]);
-//     } catch (error) {
-//         res.status(500).json({ error: error.message });
-//     }
-// });
 
 amqp.connect('amqp://rabbitmq:5672', (error0, connection) => {
     if (error0) {

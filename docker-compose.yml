@@ -6,6 +6,7 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
   auth:
     build: ./auth
     container_name: auth_service
@@ -23,6 +24,14 @@ services:
       - rabbitmq
       - user_db
 
+  product:
+    build: ./product
+    container_name: product_service
+    ports:
+      - "5002:5002"
+    depends_on:
+      - product_db
+
   auth_db:
     image: mysql:latest
     container_name: auth_db
@@ -33,6 +42,7 @@ services:
       - "3308:3306"   
     volumes:
       - ./auth/init:/docker-entrypoint-initdb.d
+
   user_db:
     image: mysql:latest
     container_name: user_db
@@ -43,6 +53,17 @@ services:
       - "3307:3306"
     volumes:
       - ./user/init:/docker-entrypoint-initdb.d
+      
+  product_db:
+    image: mysql:latest
+    container_name: product_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ms_product
+    ports:
+      - "3309:3306"
+    volumes:
+      - ./product/init:/docker-entrypoint-initdb.d
 
   kong:
     image: kong:latest
@@ -60,5 +81,3 @@ services:
     depends_on:
       - auth
       - user
-  
-
