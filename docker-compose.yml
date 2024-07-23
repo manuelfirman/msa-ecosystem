@@ -29,8 +29,9 @@ services:
     container_name: product_service
     ports:
       - "5002:5002"
-    depends_on:
-      - product_db
+    volumes:
+      - product_data:/app/data
+
 
   auth_db:
     image: mysql:latest
@@ -54,16 +55,6 @@ services:
     volumes:
       - ./user/init:/docker-entrypoint-initdb.d
       
-  product_db:
-    image: mysql:latest
-    container_name: product_db
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: ms_product
-    ports:
-      - "3309:3306"
-    volumes:
-      - ./product/init:/docker-entrypoint-initdb.d
 
   kong:
     image: kong:latest
@@ -81,3 +72,6 @@ services:
     depends_on:
       - auth
       - user
+
+volumes:
+  product_data:

@@ -8,5 +8,5 @@ router.register(r'products', views.ProductViewSet)
 router.register(r'images', views.ProductImageViewSet)
 
 urlpatterns = [
-    path('api/v1', include(router.urls)),
+    path('', include(router.urls)),
 ]
