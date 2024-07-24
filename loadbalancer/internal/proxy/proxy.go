@@ -1,10 +1,12 @@
 package proxy
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strings"
 	"sync/atomic"
 
@@ -66,10 +68,26 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	index := atomic.AddUint32(&currIndex, 1) % uint32(len(targets))
 	target = targets[index]
 
-	// Set the X-Request-ID header for tracking the request
-	r.Header.Set("X-Request-ID", uuid.New().String())
-
 	// create a reverse proxy that forwards the request to the selected service
 	proxy := httputil.NewSingleHostReverseProxy(target)
+
+	// director function to modify the request
+	proxy.Director = func(req *http.Request) {
+		// Set the X-Request-ID header for tracking the request
+		req.Header.Set("X-Request-ID", uuid.New().String())
+		traceInfo := fmt.Sprintf("http://%s%s%s", os.Getenv("SERVICE_NAME"), os.Getenv("PORT"), r.URL.Path)
+		if r.Header.Get("X-Trace-Info") != "" {
+			traceInfo = r.Header.Get("X-Trace-Info") + ", " + traceInfo
+		}
+		req.Header.Set("x-trace-info", traceInfo)
+		// set the URL of the selected service
+		req.URL.Scheme = target.Scheme
+		req.URL.Host = target.Host
+		req.URL.Path = r.URL.Path
+		req.URL.RawQuery = r.URL.RawQuery
+		req.Method = r.Method
+	}
+
+	// forward the request to the selected service
 	proxy.ServeHTTP(w, r)
 }

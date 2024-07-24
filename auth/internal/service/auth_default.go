@@ -4,7 +4,9 @@ import (
 	"auth/internal/domain"
 	"auth/internal/repository"
 	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -12,7 +14,7 @@ import (
 )
 
 var (
-	userServiceURL = "http://user_service:5001/users"
+	UserServiceURL = "http://user_service:5001/users"
 )
 
 type UserRequest struct {
@@ -25,7 +27,8 @@ type UserRequest struct {
 }
 
 type UserResponse struct {
-	ID int `json:"id"`
+	ID       int    `json:"id"`
+	ErrorMsg string `json:"error"`
 }
 
 // AuthDefault represents the default implementation of the AuthService
@@ -53,9 +56,8 @@ func (ad *AuthDefault) Login(auth *domain.Auth) (err error) {
 	return
 }
 
-func (ad *AuthDefault) Register(user *domain.User) (err error) {
-
-	err = createUserService(user)
+func (ad *AuthDefault) Register(user *domain.User, ctx context.Context) (err error) {
+	err = createUserService(user, ctx)
 	if err != nil {
 		return err
 	}
@@ -78,8 +80,9 @@ func (ad *AuthDefault) Register(user *domain.User) (err error) {
 	return
 }
 
-func createUserService(user *domain.User) (err error) {
-	// Crear un ID único para el usuario
+func createUserService(user *domain.User, ctx context.Context) (err error) {
+
+	// create unique ID for the user
 	uniqueID, err := uuid.NewRandom()
 	if err != nil {
 		return err
@@ -100,16 +103,33 @@ func createUserService(user *domain.User) (err error) {
 		return err
 	}
 
-	resp, err := http.Post(userServiceURL, "application/json", bytes.NewBuffer(jsonData))
+	// create a new HTTP request
+	req, err := http.NewRequest(http.MethodPost, UserServiceURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+	// get the request ID and forwarded for from the context
+	requestID, ok := ctx.Value("request_id").(string)
+	if !ok {
+		return fmt.Errorf("failed to get request ID from context")
+	}
+	traceInfo, ok := ctx.Value("trace_info").(string)
+	if !ok {
+		return fmt.Errorf("failed to get trace info for from context")
+	}
+
+	// set the headers
+	req.Header.Set("X-Request-ID", requestID)
+	req.Header.Set("X-Trace-Info", traceInfo)
+	req.Header.Set("Content-Type", "application/json")
+
+	// send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		return ErrServiceFailedToCreateUser
-	}
-
 	// read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -122,7 +142,11 @@ func createUserService(user *domain.User) (err error) {
 		return err
 	}
 
-	// Asignar el ID al usuario
+	if resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("%w: %s", ErrServiceFailedToCreateUser, userResponse.ErrorMsg)
+	}
+
+	// asign the user ID
 	user.ID = userResponse.ID
 
 	return

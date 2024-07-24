@@ -1,12 +1,12 @@
 version: '3.8'
 services:
   # RABBITMQ
-  rabbitmq:
-    image: rabbitmq:management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
+  # rabbitmq:
+  #   image: rabbitmq:management
+  #   container_name: rabbitmq
+  #   ports:
+  #     - "5672:5672"
+  #     - "15672:15672"
 
   # LOAD BALANCER
   load_balancer:
@@ -65,7 +65,7 @@ services:
     ports:
       - "3308:3306"   
     volumes:
-      - ./auth/init:/docker-entrypoint-initdb.d
+      - ./auth/db/init:/docker-entrypoint-initdb.d
   user_db:
     image: mysql:latest
     container_name: user_db
@@ -75,25 +75,25 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - ./user/init:/docker-entrypoint-initdb.d
+      - ./user/db/init:/docker-entrypoint-initdb.d
       
   # KONG
-  kong:
-    image: kong:latest
-    container_name: kong
-    environment:
-      KONG_DATABASE: "off"
-      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
-    ports:
-      - "8000:8000"
-      - "8443:8443"
-      - "8001:8001"
-      - "8444:8444"
-    volumes:
-      - ./kong/kong.yml:/usr/local/kong/declarative/kong.yml
-    depends_on:
-      - auth
-      - user
+  # kong:
+  #   image: kong:latest
+  #   container_name: kong
+  #   environment:
+  #     KONG_DATABASE: "off"
+  #     KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
+  #   ports:
+  #     - "8000:8000"
+  #     - "8443:8443"
+  #     - "8001:8001"
+  #     - "8444:8444"
+  #   volumes:
+  #     - ./kong/kong.yml:/usr/local/kong/declarative/kong.yml
+  #   depends_on:
+  #     - auth
+  #     - user
 
   # OBSERVABILITY
   # loki:

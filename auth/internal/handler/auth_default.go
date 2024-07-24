@@ -4,14 +4,22 @@ import (
 	"auth/internal/crypt"
 	"auth/internal/domain"
 	"auth/internal/service"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 )
+
+type Headers struct {
+	RequestID    string
+	ForwardedFor string
+}
 
 type UserJSON struct {
 	ID        int    `json:"id"`
@@ -88,10 +96,30 @@ func (ad *AuthDefault) Login() http.HandlerFunc {
 	}
 }
 
-// Register handles the register request
 func (ad *AuthDefault) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// get the user from the request body
+		// Retrieve and check X-Request-ID
+		requestID := r.Header.Get("X-Request-ID")
+		if requestID == "" {
+			http.Error(w, "X-Request-ID header is required", http.StatusBadRequest)
+			return
+		}
+
+		// Retrieve and check X-Trace-Info
+		traceInfo := r.Header.Get("X-Trace-Info")
+		if traceInfo == "" {
+			http.Error(w, "X-Trace-Info header is required", http.StatusBadRequest)
+			return
+		}
+
+		// Append service-specific trace info
+		traceInfo += fmt.Sprintf(", http://%s%s%s", os.Getenv("SERVICE_NAME"), os.Getenv("PORT"), r.URL.Path)
+
+		// Add headers data to the context
+		ctx := context.WithValue(context.Background(), "request_id", requestID)
+		ctx = context.WithValue(ctx, "trace_info", traceInfo)
+
+		// Process the request body
 		bytes, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
@@ -116,28 +144,26 @@ func (ad *AuthDefault) Register() http.HandlerFunc {
 			return
 		}
 
-		// deserialize the user
+		// Deserialize and process the user
 		user := deserializeUser(userJson)
-		// hash the password
 		user.Password, err = crypt.HashPassword(user.Password)
 		if err != nil {
 			http.Error(w, "Error hashing password", http.StatusInternalServerError)
 			return
 		}
 
-		// register the user with the service
-		err = ad.sv.Register(&user)
+		err = ad.sv.Register(&user, ctx)
 		if err != nil {
 			switch err {
 			case service.ErrServiceDuplicateEntry:
 				http.Error(w, "Duplicate entry", http.StatusConflict)
 			default:
-				http.Error(w, "Error creating user", http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 			return
 		}
 
-		// serialize the user and send the response
+		// Serialize and send the response
 		data := map[string]any{
 			"message": "user created",
 			"data":    serializeUser(user),
@@ -149,7 +175,12 @@ func (ad *AuthDefault) Register() http.HandlerFunc {
 			return
 		}
 
+		userTraceInfo := "http://user_service:5001/users"
+
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-Request-ID", requestID)
+		traceInfo += fmt.Sprintf(", %s, http://%s%s%s", userTraceInfo, os.Getenv("SERVICE_NAME"), os.Getenv("PORT"), r.URL.Path)
+		w.Header().Set("x-trace-info", traceInfo)
 		w.WriteHeader(http.StatusCreated)
 		w.Write(response)
 	}
@@ -227,4 +258,16 @@ func ValidateKeyExistance(mp map[string]any, keys ...string) error {
 		}
 	}
 	return nil
+}
+
+func getPortFromRequest(r *http.Request) string {
+	// Extract the port from the Host header
+	host := r.Host
+	// Split the Host header into host and port
+	parts := strings.Split(host, ":")
+	if len(parts) > 1 {
+		return parts[1]
+	}
+	// Return default port for HTTP and HTTPS if not specified
+	return "80" // Default for HTTP
 }

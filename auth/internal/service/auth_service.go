@@ -2,6 +2,7 @@ package service
 
 import (
 	"auth/internal/domain"
+	"context"
 	"errors"
 )
 
@@ -21,5 +22,5 @@ type AuthService interface {
 	// Login logs in a user
 	Login(*domain.Auth) error
 	// Register registers a new user
-	Register(*domain.User) error
+	Register(*domain.User, context.Context) error
 }

@@ -14,11 +14,8 @@ COPY --from=builder /app/auth_service /root/auth_service
 
 # Copiar el script de configuración
 COPY env.sh /root/env.sh
-
 # Hacer el binario ejecutable
 RUN chmod +x /root/auth_service
-
-# Asegurarse de que el script de configuración también sea ejecutable
 RUN chmod +x /root/env.sh
 
 # Exponer el puerto
