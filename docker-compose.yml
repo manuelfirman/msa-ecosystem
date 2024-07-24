@@ -1,11 +1,14 @@
 version: '3.8'
 services:
+  # RABBITMQ
   rabbitmq:
     image: rabbitmq:management
     container_name: rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  # LOAD BALANCER
   load_balancer:
     build: ./loadbalancer
     container_name: load_balancer
@@ -20,6 +23,7 @@ services:
     networks:
       - default
 
+  # SERVICES
   auth:
     build: ./auth
     container_name: auth_service
@@ -29,7 +33,6 @@ services:
       - auth_db
     networks:
       - default
-
   user:
     build: ./user
     container_name: user_service
@@ -42,7 +45,6 @@ services:
       - default
     env_file:
       - ./user/.env
-
   product:
     build: ./product
     container_name: product_service
@@ -53,6 +55,7 @@ services:
     networks:
       - default
 
+  # DATABASES
   auth_db:
     image: mysql:latest
     container_name: auth_db
@@ -63,7 +66,6 @@ services:
       - "3308:3306"   
     volumes:
       - ./auth/init:/docker-entrypoint-initdb.d
-
   user_db:
     image: mysql:latest
     container_name: user_db
@@ -75,7 +77,7 @@ services:
     volumes:
       - ./user/init:/docker-entrypoint-initdb.d
       
-
+  # KONG
   kong:
     image: kong:latest
     container_name: kong
@@ -93,8 +95,32 @@ services:
       - auth
       - user
 
+  # OBSERVABILITY
+  # loki:
+  #   image: grafana/loki:2.8.0
+  #   container_name: loki
+  #   ports:
+  #     - "3100:3100"
+  #   volumes:
+  #     - ./loki-config.yaml:/etc/loki/loki-config.yaml
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - loki
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #   volumes:
+  #     - grafana-data:/var/lib/grafana
+
+# VOLUMES
 volumes:
   product_data:
+  # grafana-data:
+# NETWORKS
 networks:
   default:
     name: my_network
