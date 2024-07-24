@@ -39,7 +39,7 @@ services:
     ports:
       - "5001:5001"
     depends_on:
-      - rabbitmq
+      # - rabbitmq
       - user_db
     networks:
       - default

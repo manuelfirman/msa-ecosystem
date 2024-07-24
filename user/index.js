@@ -18,6 +18,15 @@ const pool = mysql.createPool({
     queueLimit: 0
   });
 
+app.use((req, res, next) => {
+req.requestId = req.headers['x-request-id'];
+if (!req.requestId) {
+    res.status(400).json({ error: 'Missing X-Request-ID header' });
+    return;
+}
+res.setHeader('X-Request-ID', req.requestId);
+next();
+});
 
 app.post('/users', async (req, res) => {
     const { username, email, first_name, last_name, unique_id } = req.body;

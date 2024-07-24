@@ -25,4 +25,4 @@ RUN chmod +x /root/env.sh
 EXPOSE 5000
 
 # Configurar el punto de entrada para ejecutar el script de configuración y luego la aplicación
-CMD ["/bin/sh", "-c", ". /root/env.sh && /root/auth_service"]
+CMD ["/bin/sh", "-c", "sleep 30 && . /root/env.sh && /root/auth_service"]
