@@ -2,11 +2,19 @@
 FROM golang:1.22 AS builder
 WORKDIR /app
 COPY . .
-RUN go build -o load_balancer
+
+WORKDIR /app/cmd
+RUN go build -o /app/load_balancer
 
 FROM debian:latest
 WORKDIR /root/
-COPY --from=builder /app/load_balancer .
+
+COPY env.sh /root/env.sh
+RUN chmod +x /root/env.sh
+
+COPY --from=builder /app/load_balancer /root/load_balancer
 RUN chmod +x /root/load_balancer
+
 EXPOSE 80
-CMD ["./load_balancer"]
+
+CMD ["/bin/sh", "-c", ". /root/env.sh && /root/load_balancer"]

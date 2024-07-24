@@ -6,7 +6,7 @@ WORKDIR /app/cmd
 RUN go build -o /app/auth_service
 
 # Etapa de ejecución
-FROM ubuntu:latest
+FROM debian:latest
 WORKDIR /root/
 
 # Copiar el binario de la etapa de construcción
