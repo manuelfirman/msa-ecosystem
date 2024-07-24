@@ -1,14 +1,28 @@
-# Etapa de construcción
 FROM golang:1.18 AS builder
 WORKDIR /app
 COPY . .
-RUN go build -o auth_service
+
+WORKDIR /app/cmd
+RUN go build -o /app/auth_service
 
 # Etapa de ejecución
 FROM ubuntu:latest
 WORKDIR /root/
+
+# Copiar el binario de la etapa de construcción
 COPY --from=builder /app/auth_service /root/auth_service
-RUN ls -l /root/ # Verifica que el archivo está ahí
-RUN chmod +x /root/auth_service # Asegúrate de que el archivo sea ejecutable
+
+# Copiar el script de configuración
+COPY env.sh /root/env.sh
+
+# Hacer el binario ejecutable
+RUN chmod +x /root/auth_service
+
+# Asegurarse de que el script de configuración también sea ejecutable
+RUN chmod +x /root/env.sh
+
+# Exponer el puerto
 EXPOSE 5000
-CMD ["/root/auth_service"]
+
+# Configurar el punto de entrada para ejecutar el script de configuración y luego la aplicación
+CMD ["/bin/sh", "-c", ". /root/env.sh && /root/auth_service"]

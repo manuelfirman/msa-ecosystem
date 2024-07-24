@@ -1,0 +1,11 @@
+package domain
+
+type User struct {
+	ID        int
+	Username  string
+	Password  string
+	Email     string
+	FirstName string
+	LastName  string
+	UniqueID  string
+}

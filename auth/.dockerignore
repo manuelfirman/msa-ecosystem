@@ -1,0 +1,15 @@
+# Ignorar el directorio de caché de Go
+*.a
+*.o
+*.out
+*.test
+
+# Ignorar archivos de configuración de entornos de desarrollo
+.env
+
+# Ignorar archivos de prueba
+testdata/
+
+# Ignorar archivos generados
+build/
+dist/

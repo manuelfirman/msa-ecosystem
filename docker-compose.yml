@@ -6,6 +6,19 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+  load_balancer:
+    build: ./loadbalancer
+    container_name: load_balancer
+    ports:
+      - "80:80"
+    depends_on:
+      - auth
+      - user
+      - product
+      # - order
+      # - notification
+    networks:
+      - default
 
   auth:
     build: ./auth
@@ -14,6 +27,8 @@ services:
       - "5000:5000"
     depends_on:
       - auth_db
+    networks:
+      - default
 
   user:
     build: ./user
@@ -23,6 +38,10 @@ services:
     depends_on:
       - rabbitmq
       - user_db
+    networks:
+      - default
+    env_file:
+      - ./user/.env
 
   product:
     build: ./product
@@ -31,7 +50,8 @@ services:
       - "5002:5002"
     volumes:
       - product_data:/app/data
-
+    networks:
+      - default
 
   auth_db:
     image: mysql:latest
@@ -75,3 +95,6 @@ services:
 
 volumes:
   product_data:
+networks:
+  default:
+    name: my_network
