@@ -18,7 +18,7 @@ services:
       - auth
       - user
       - product
-      # - order
+      - order
       # - notification
     networks:
       - default
@@ -54,6 +54,13 @@ services:
       - product_data:/app/data
     networks:
       - default
+  order:
+    build: ./order
+    container_name: order_service
+    ports:
+      - "5003:5003"
+    depends_on:
+      - order_db
 
   # DATABASES
   auth_db:
@@ -63,7 +70,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: ms_auth
     ports:
-      - "3308:3306"   
+      - "3309:3306"   
     volumes:
       - ./auth/db/init:/docker-entrypoint-initdb.d
   user_db:
@@ -73,9 +80,19 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: ms_user
     ports:
-      - "3307:3306"
+      - "3308:3306"
     volumes:
       - ./user/db/init:/docker-entrypoint-initdb.d
+  order_db:
+    image: mysql:latest
+    container_name: order_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ms_order
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./order/db/init:/docker-entrypoint-initdb.d
       
   # KONG
   # kong:

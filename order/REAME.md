@@ -1,2 +1,0 @@
-## Procesamiento de Pedidos con Java - Spring Boot
-Spring Boot es ideal para servicios críticos que requieren transacciones seguras y confiables, como el procesamiento de pedidos. Ofrece un fuerte soporte para el manejo de transacciones y es altamente escalable.

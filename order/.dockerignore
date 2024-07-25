@@ -1,0 +1,16 @@
+# Ignorar directorios de construcción
+target/
+
+# Ignorar archivos temporales y de configuración del sistema
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# Ignorar archivos de configuración del IDE
+.idea/
+.vscode/
+*.iml
+
+# Ignorar archivos de caché
+*.class
